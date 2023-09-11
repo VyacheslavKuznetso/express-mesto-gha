@@ -3,7 +3,7 @@ const Card = require('../models/card');
 module.exports.getCard = (req, res) => {
   Card.find({})
     .then((cards) => {
-      res.send({ data: cards });
+      res.status(201).send({ data: cards });
     })
     .catch((err) => {
       res.status(500).send({ message: `Произошла ошибка: ${err}` });
@@ -14,11 +14,16 @@ module.exports.postCard = (req, res) => {
   const { name, link } = req.body;
   const { _id } = req.user;
   Card.create({ name, link, owner: _id })
+    .orFail(new Error('ValidationError'))
     .then((card) => {
-      res.send({ data: card });
+      res.status(201).send({ data: card });
     })
     .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      if (err.massege === 'ValidationError') {
+        res.status(400).send({ message: 'Некорректный формат name, link или ID' });
+      } else {
+        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      }
     });
 };
 
@@ -26,11 +31,16 @@ module.exports.geleteCard = (req, res) => {
   const cardId = req.params.id;
 
   Card.deleteOne({ _id: cardId })
+    .orFail(new Error('CastError'))
     .then((result) => {
-      res.send({ data: result });
+      res.status(201).send({ data: result });
     })
     .catch((err) => {
-      res.status(500).send(`Произошда ошибка: ${err}`);
+      if (err.message === 'CastError') {
+        res.status(400).send({ message: 'Некорректный формат ID карточки' });
+      } else {
+        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      }
     });
 };
 
@@ -42,14 +52,16 @@ module.exports.likeCard = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(new Error('NotCardEroor'))
     .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      return res.send({ data: card });
+      res.status(201).send({ data: card });
     })
     .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      if (err === 'NotCardEroor') {
+        res.status(404).send({ message: 'Карточка не найдена' });
+      } else {
+        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      }
     });
 };
 
@@ -61,13 +73,15 @@ module.exports.dislikeCard = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(new Error('NotCardEroor'))
     .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      return res.send({ data: card });
+      res.status(201).send({ data: card });
     })
     .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      if (err === 'NotCardEroor') {
+        res.status(404).send({ message: 'Карточка не найдена' });
+      } else {
+        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      }
     });
 };

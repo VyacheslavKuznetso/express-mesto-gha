@@ -12,24 +12,25 @@ module.exports.getUser = (req, res) => {
 
 module.exports.getUserId = (req, res) => {
   User.findById(req.params.userId)
+    .orFail(new Error('NotValidId'))
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-      return res.send({ data: user });
+      res.status(201).send({ data: user });
     })
     .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      if (err.message === 'NotValidId') {
+        res.status(404).send({ message: 'Пользователь не найден' });
+      } else {
+        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      }
     });
 };
-
 
 module.exports.postUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
     .then((user) => {
-      res.send({ data: user });
+      res.status(201).send({ data: user });
     })
     .catch((err) => {
       res.status(500).send({ message: `Произошла ошибка: ${err}` });
@@ -48,14 +49,16 @@ module.exports.updateUser = (req, res) => {
     { name, about },
     { new: true, runValidators: true, upsert: true },
   )
+    .orFail(new Error('NotValidId'))
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-      return res.send({ data: user });
+      res.status(201).send({ data: user });
     })
     .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      if (err === 'NotValidId') {
+        res.status(404).send({ message: 'Пользователь не найден' });
+      } else {
+        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      }
     });
 };
 
@@ -70,13 +73,15 @@ module.exports.updateAvatar = (req, res) => {
     { avatar },
     { new: true, runValidators: true, upsert: true },
   )
+    .irFail(new Error('NotValidId'))
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-      return res.send({ data: user });
+      res.status(201).send({ data: user });
     })
     .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      if (err === 'NotValidId') {
+        res.status(404).send({ message: 'Пользователь не найден' });
+      } else {
+        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      }
     });
 };
