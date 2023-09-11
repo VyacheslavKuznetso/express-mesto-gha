@@ -19,7 +19,7 @@ module.exports.postCard = (req, res) => {
       res.status(201).send({ data: card });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.massege === 'ValidationError') {
         res.status(400).send({ message: 'Некорректный формат name, link или ID' });
       } else {
         res.status(500).send({ message: `Произошла ошибка: ${err}` });
@@ -31,17 +31,15 @@ module.exports.deleteCard = (req, res) => {
   const cardId = req.params.id;
 
   Card.deleteOne({ _id: cardId })
-    .orFail(new Error('CastError'))
+    .orFail(new Error('NotValidId'))
     .then((result) => {
-      if (!result) {
-        res.status(404).send({ message: 'Карточка не найдена' });
-      } else {
-        res.status(200).send({ data: result });
-      }
+      res.status(200).send({ data: result });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         res.status(400).send({ message: 'Некорректный формат ID карточки' });
+      } else if (err.message === 'NotValidId') {
+        res.status(404).send({ message: 'Карточка не найдена' });
       } else {
         res.status(500).send({ message: `Произошла ошибка: ${err}` });
       }
@@ -61,7 +59,7 @@ module.exports.likeCard = (req, res) => {
       res.status(201).send({ data: card });
     })
     .catch((err) => {
-      if (err.name === 'NotCardEroor') {
+      if (err.massege === 'NotCardEroor') {
         res.status(404).send({ message: 'Карточка не найдена' });
       } else {
         res.status(500).send({ message: `Произошла ошибка: ${err}` });
@@ -82,7 +80,7 @@ module.exports.dislikeCard = (req, res) => {
       res.status(201).send({ data: card });
     })
     .catch((err) => {
-      if (err.name === 'NotCardEroor') {
+      if (err.massege === 'NotCardEroor') {
         res.status(404).send({ message: 'Карточка не найдена' });
       } else {
         res.status(500).send({ message: `Произошла ошибка: ${err}` });
