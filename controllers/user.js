@@ -17,7 +17,7 @@ module.exports.getUserId = (req, res) => {
       res.status(201).send({ data: user });
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
+      if (err.name === 'NotValidId') {
         res.status(404).send({ message: 'Пользователь не найден' });
       } else {
         res.status(500).send({ message: `Произошла ошибка: ${err}` });
@@ -54,7 +54,9 @@ module.exports.updateUser = (req, res) => {
       res.status(201).send({ data: user });
     })
     .catch((err) => {
-      if (err === 'NotValidId') {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Некорректный формат ID пользователя' });
+      } else if (err.message === 'NotValidId') {
         res.status(404).send({ message: 'Пользователь не найден' });
       } else {
         res.status(500).send({ message: `Произошла ошибка: ${err}` });
@@ -78,7 +80,7 @@ module.exports.updateAvatar = (req, res) => {
       res.status(201).send({ data: user });
     })
     .catch((err) => {
-      if (err === 'NotValidId') {
+      if (err.name === 'NotValidId') {
         res.status(404).send({ message: 'Пользователь не найден' });
       } else {
         res.status(500).send({ message: `Произошла ошибка: ${err}` });
