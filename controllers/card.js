@@ -12,7 +12,7 @@ module.exports.getCard = (req, res) => {
 
 module.exports.postCard = (req, res) => {
   const { name, link } = req.body;
-  const { _id } = req.user;
+  const { _id } = req.user._id;
   Card.create({ name, link, owner: _id })
     .orFail(new Error('ValidationError'))
     .then((card) => {
