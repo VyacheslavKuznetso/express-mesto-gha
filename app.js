@@ -15,6 +15,8 @@ const { createUser, login } = require('./controllers/user');
 const app = express();
 app.use(helmet());
 app.disable('x-powered-by');
+// Обработчик валидации celebrate //
+app.use(errors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -28,7 +30,7 @@ app.post('/signup', celebrate({ // Валидация приходящих на 
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
     avatar: Joi.string().uri(),
-    email: Joi.string().required().email(),
+    email: Joi.string().required(),
     password: Joi.string().required(),
   }),
 
@@ -37,18 +39,14 @@ app.post('/signup', celebrate({ // Валидация приходящих на 
 // Авторизация //
 app.use(auth);
 // Роуты, которым авторизация нужна //
-app.use('/users', require('./routes/users'));
-app.use('/cards', require('./routes/cards'));
-
 app.post('/signin', celebrate({ // Валидация приходящих на сервер данных //
   body: Joi.object().keys({
     email: Joi.string().required(),
     password: Joi.string().required(),
   }),
 }), login);
-
-// Обработчик валидации celebrate //
-app.use(errors());
+app.use('/users', require('./routes/users'));
+app.use('/cards', require('./routes/cards'));
 
 // Обработчик для несуществующих роутов //
 app.use((err, req, res, next) => {

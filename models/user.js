@@ -34,9 +34,8 @@ const userShema = new mongoose.Schema({
     required: [true, 'Поле "email" должно быть заполнено'],
     unique: true,
     validate: {
-      validator(ema) {
-        const regexEmail = /\w+\.-@\w+\.\w+/;
-        return regexEmail.test(ema);
+      validator(e) {
+        return validator.isEmail(e);
       },
       message: 'Некорректный формат email',
     },

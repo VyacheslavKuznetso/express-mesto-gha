@@ -22,6 +22,7 @@ module.exports.login = (req, res) => { // Войти в приложение //
       })
         .end();
 
+      console.log(token);
       res.send({ token });
     })
     .catch((err) => {
