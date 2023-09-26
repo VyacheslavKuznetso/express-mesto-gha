@@ -1,3 +1,4 @@
+const { celebrate, Joi } = require('celebrate');
 const { errors } = require('celebrate');
 const path = require('path');
 const helmet = require('helmet');
@@ -9,6 +10,7 @@ const cookieParser = require('cookie-parser');
 
 const bodyParser = require('body-parser');
 const auth = require('./middlewares/auth');
+const { createUser, login } = require('./controllers/user');
 
 const app = express();
 app.use(helmet());
@@ -21,12 +23,29 @@ app.use(cookieParser());
 
 mongoose.connect(DB_URL);
 
+app.post('/signup', celebrate({ // Валидация приходящих на сервер данных //
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string().uri(),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+
+}), createUser);
+
 // Авторизация //
 app.use(auth);
-
 // Роуты, которым авторизация нужна //
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
+
+app.post('/signin', celebrate({ // Валидация приходящих на сервер данных //
+  body: Joi.object().keys({
+    email: Joi.string().required(),
+    password: Joi.string().required(),
+  }),
+}), login);
 
 // Обработчик валидации celebrate //
 app.use(errors());
