@@ -1,5 +1,4 @@
-const { celebrate, Joi } = require('celebrate');
-const { errors } = require('celebrate');
+const { errors, celebrate, Joi } = require('celebrate');
 const path = require('path');
 const helmet = require('helmet');
 
@@ -36,21 +35,36 @@ app.post('/signup', celebrate({ // Валидация приходящих на 
 
 }), createUser);
 
-// Авторизация //
-app.use(auth);
-// Роуты, которым авторизация нужна //
 app.post('/signin', celebrate({ // Валидация приходящих на сервер данных //
   body: Joi.object().keys({
     email: Joi.string().required(),
     password: Joi.string().required(),
   }),
 }), login);
+
+// Авторизация //
+// app.use(auth);
+// Роуты, которым авторизация нужна //
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
 // Обработчик для несуществующих роутов //
-app.use((err, req, res, next) => {
+app.use((req, res, next) => {
   res.status(404).json({ message: 'Ресурс не найден' });
+});
+
+app.use((err, req, res, next) => {
+  const { status = 500, message } = err; // если у ошибки нет статуса, выставляем 500 //
+
+  res
+    .status(status)
+    .send({ // проверяем статус и выставляем сообщение в зависимости от него //
+      message: status === 500
+        ? 'На сервере произошла ошибка'
+        : message,
+    });
+
+  next(err);
 });
 
 app.listen(PORT, () => {

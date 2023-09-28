@@ -56,7 +56,7 @@ const userShema = new mongoose.Schema({
   },
 }, { versionKey: false }); // убираем отслеживание версии схемы //
 
-userShema.static.findUserByCredentials = function (email, password) {
+userShema.statics.findUserByCredentials = function (email, password) {
   return this.findOne({ email }).select('+password') // в случае аутентификации хеш пароля нужен //
     .then((user) => {
       if (!user) {

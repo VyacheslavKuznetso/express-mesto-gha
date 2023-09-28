@@ -2,6 +2,9 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcryptjs = require('bcryptjs');
 const User = require('../models/user');
+const BadRequestError = require('../errors/bad-request-err');
+const ConflictError = require('../errors/conflict-err');
+const NotFoundError = require('../errors/not-found-err');
 
 module.exports.login = (req, res) => { // Войти в приложение //
   const { email, password } = req.body;
@@ -19,10 +22,8 @@ module.exports.login = (req, res) => { // Войти в приложение //
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней //
         sameSite: true,
-      })
-        .end();
+      });
 
-      console.log(token);
       res.send({ token });
     })
     .catch((err) => {
@@ -55,7 +56,18 @@ module.exports.getUserId = (req, res) => { // Запрос пользовате�
     });
 };
 
-module.exports.createUser = (req, res) => { // Регистрация пользователя //
+module.exports.getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователь не найден');
+      }
+      res.send(user);
+    })
+    .catch(next);
+};
+
+module.exports.createUser = (req, res, next) => { // Регистрация пользователя //
   const {
     name,
     about,
@@ -77,7 +89,13 @@ module.exports.createUser = (req, res) => { // Регистрация польз
           res.status(201).send({ data: user });
         })
         .catch((err) => {
-          res.status(500).send({ message: `Произошла ошибка: ${err}` });
+          if (err.code === 11000) {
+            next(new ConflictError('Пользователь с таким email уже существует'));
+          } else if (err.name === 'ValidationError') {
+            next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+          } else {
+            next(err);
+          }
         });
     })
     .catch((err) => {
@@ -85,11 +103,11 @@ module.exports.createUser = (req, res) => { // Регистрация польз
     });
 };
 
-module.exports.updateUser = (req, res) => { // Обновить информацию о пользователе //
+module.exports.updateUser = (req, res, next) => { // Обновить информацию о пользователе //
   const { name, about } = req.body;
 
   if (!name || !about) {
-    return res.status(400).send({ message: 'Необходимо указать name и about' });
+    return next(new BadRequestError('Необходимо указать name и about'));
   }
 
   return User.findByIdAndUpdate(

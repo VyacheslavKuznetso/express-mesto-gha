@@ -1,4 +1,5 @@
 const Card = require('../models/card');
+const ForbiddenError = require('../errors/forbidden-err');
 
 module.exports.getCard = (req, res) => {
   Card.find({})
@@ -33,6 +34,9 @@ module.exports.deleteCard = (req, res) => {
   Card.deleteOne({ _id: cardId })
     .orFail(new Error('NotValidId'))
     .then((result) => {
+      if (!result.owner.equals(req.user._id)) {
+        throw new ForbiddenError('Доступ запрещен');
+      }
       res.status(200).send({ data: result });
     })
     .catch((err) => {
