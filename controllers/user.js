@@ -24,7 +24,7 @@ module.exports.login = (req, res) => { // Войти в приложение //
         sameSite: true,
       });
 
-      res.send({ token });
+      res.send({ message: 'Авторизация прошла успешно' });
     })
     .catch((err) => {
       res.status(401).send({ message: err.message });
@@ -86,7 +86,12 @@ module.exports.createUser = (req, res, next) => { // Регистрация по
         password: hash,
       })
         .then((user) => {
-          res.status(201).send({ data: user });
+          res.status(201).send({
+            data: {
+              _id: user._id,
+              email: user.email,
+            },
+          });
         })
         .catch((err) => {
           if (err.code === 11000) {
@@ -106,50 +111,45 @@ module.exports.createUser = (req, res, next) => { // Регистрация по
 module.exports.updateUser = (req, res, next) => { // Обновить информацию о пользователе //
   const { name, about } = req.body;
 
-  if (!name || !about) {
-    return next(new BadRequestError('Необходимо указать name и about'));
-  }
-
   return User.findByIdAndUpdate(
     req.params.id,
     { name, about },
     { new: true, runValidators: true, upsert: true },
   )
-    .orFail(new Error('NotValidId'))
     .then((user) => {
-      res.status(201).send({ data: user });
+      if (!user) {
+        throw new NotFoundError('Пользователь не найден');
+      }
+      return res.status(201).send({ data: user });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Некорректный формат ID пользователя' });
-      } else if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Пользователь не найден' });
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Некорректный формат ID пользователя'));
       } else {
-        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+        next(err);
       }
     });
 };
 
-module.exports.updateAvatar = (req, res) => { // Обновить аватар пользователя //
+module.exports.updateAvatar = (req, res, next) => { // Обновить аватар пользователя //
   const { avatar } = req.body;
-  if (!avatar) {
-    return res.status(400).send({ message: 'Необходимо указать avatar' });
-  }
 
   return User.findByIdAndUpdate(
     req.params.id,
     { avatar },
     { new: true, runValidators: true, upsert: true },
   )
-    .irFail(new Error('NotValidId'))
     .then((user) => {
-      res.status(201).send({ data: user });
+      if (!user) {
+        throw new NotFoundError('Пользователь не найден');
+      }
+      return res.status(201).send({ data: user });
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Пользователь не найден' });
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Пользователь не найден'));
       } else {
-        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+        next(err);
       }
     });
 };
