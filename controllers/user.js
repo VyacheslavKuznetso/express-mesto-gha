@@ -6,29 +6,27 @@ const BadRequestError = require('../errors/bad-request-err');
 const ConflictError = require('../errors/conflict-err');
 const NotFoundError = require('../errors/not-found-err');
 
-module.exports.login = (req, res) => { // Войти в приложение //
+module.exports.login = (req, res, next) => { // Авторизация пользователя //
   const { email, password } = req.body;
 
   User.findUserByCredentials(email, password)
     .then((user) => {
       const { NODE_ENV, JWT_SECRET } = process.env;
-      const token = jwt.sign(
+      const token = jwt.sign( // создать токен длительности age 7 дней //
         { _id: user._id },
         NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
         { expiresIn: '7d' },
       );
 
-      res.cookie('jwt', token, {
-        httpOnly: true,
+      res.cookie('jwt', token, { // отправить токен, браузер сохранит его в куках //
+        httpOnly: true, // запретить доступ из JS //
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней //
-        sameSite: true,
+        sameSite: true, // защитить от автоматической отправки кука //
       });
 
       res.send({ message: 'Авторизация прошла успешно' });
     })
-    .catch((err) => {
-      res.status(401).send({ message: err.message });
-    });
+    .catch(next);
 };
 
 module.exports.getUser = (req, res) => { // Запрос информации о пользователе //
@@ -41,19 +39,15 @@ module.exports.getUser = (req, res) => { // Запрос информации о
     });
 };
 
-module.exports.getUserId = (req, res) => { // Запрос пользователя по id //
+module.exports.getUserId = (req, res, next) => { // Запрос пользователя по id //
   User.findById(req.params.userId)
-    .orFail(new Error('NotValidId'))
     .then((user) => {
-      res.status(201).send({ data: user });
-    })
-    .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Пользователь не найден' });
-      } else {
-        res.status(500).send({ message: `Произошла ошибка: ${err}` });
+      if (!user) {
+        throw new NotFoundError('Пользователь не найден');
       }
-    });
+      res.status(200).send({ data: user });
+    })
+    .catch(next);
 };
 
 module.exports.getCurrentUser = (req, res, next) => {
@@ -62,7 +56,7 @@ module.exports.getCurrentUser = (req, res, next) => {
       if (!user) {
         throw new NotFoundError('Пользователь не найден');
       }
-      res.send(user);
+      res.status(200).send({ data: user });
     })
     .catch(next);
 };
@@ -111,7 +105,7 @@ module.exports.createUser = (req, res, next) => { // Регистрация по
 module.exports.updateUser = (req, res, next) => { // Обновить информацию о пользователе //
   const { name, about } = req.body;
 
-  return User.findByIdAndUpdate(
+  return User.findByIdAndUpdate( // выполнить обновление информации о пользователе в базе данных //
     req.params.id,
     { name, about },
     { new: true, runValidators: true, upsert: true },
@@ -120,7 +114,7 @@ module.exports.updateUser = (req, res, next) => { // Обновить инфор
       if (!user) {
         throw new NotFoundError('Пользователь не найден');
       }
-      return res.status(201).send({ data: user });
+      return res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -134,7 +128,7 @@ module.exports.updateUser = (req, res, next) => { // Обновить инфор
 module.exports.updateAvatar = (req, res, next) => { // Обновить аватар пользователя //
   const { avatar } = req.body;
 
-  return User.findByIdAndUpdate(
+  return User.findByIdAndUpdate( // выполнить обновление информации о пользователе в базе данных //
     req.params.id,
     { avatar },
     { new: true, runValidators: true, upsert: true },
@@ -143,7 +137,7 @@ module.exports.updateAvatar = (req, res, next) => { // Обновить ават
       if (!user) {
         throw new NotFoundError('Пользователь не найден');
       }
-      return res.status(201).send({ data: user });
+      return res.status(200).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {

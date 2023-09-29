@@ -19,7 +19,7 @@ module.exports.postCard = (req, res) => {
   Card.create({ name, link, owner: _id })
     .orFail(new Error('ValidationError'))
     .then((card) => {
-      res.status(200).send({ data: card });
+      res.status(201).send({ data: card });
     })
     .catch((err) => {
       if (err.massege === 'ValidationError') {
@@ -31,9 +31,9 @@ module.exports.postCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  const cardId = req.params.id;
+  const id = req.params.cardId;
 
-  Card.deleteOne({ _id: cardId })
+  Card.deleteOne({ _id: id })
     .then((result) => {
       if (!result) {
         throw new NotFoundError('Карточка с указанным _id не найдена');
@@ -58,7 +58,7 @@ module.exports.likeCard = (req, res, next) => {
       if (!card) {
         throw new NotFoundError('Карточка с указанным _id не найдена');
       }
-      res.send(card);
+      res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -81,7 +81,7 @@ module.exports.dislikeCard = (req, res, next) => {
       if (!card) {
         throw new NotFoundError('Карточка с указанным _id не найдена');
       }
-      res.send(card);
+      res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
