@@ -13,27 +13,24 @@ module.exports.getCard = (req, res) => {
     });
 };
 
-module.exports.postCard = (req, res) => {
+module.exports.postCard = (req, res, next) => {
   const { name, link } = req.body;
   const { _id } = req.user._id;
   Card.create({ name, link, owner: _id })
-    .orFail(new Error('ValidationError'))
+
     .then((card) => {
+      if (!card) {
+        throw new BadRequestError('Некорректный формат name, link или ID');
+      }
       res.status(201).send({ data: card });
     })
-    .catch((err) => {
-      if (err.massege === 'ValidationError') {
-        res.status(400).send({ message: 'Некорректный формат name, link или ID' });
-      } else {
-        res.status(500).send({ message: `Произошла ошибка: ${err}` });
-      }
-    });
+    .catch(next);
 };
 
 module.exports.deleteCard = (req, res, next) => {
   const id = req.params.cardId;
 
-  Card.deleteOne({ _id: id })
+  Card.findById({ _id: id })
     .then((result) => {
       if (!result) {
         throw new NotFoundError('Карточка с указанным _id не найдена');

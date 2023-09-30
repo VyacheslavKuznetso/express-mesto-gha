@@ -29,14 +29,12 @@ module.exports.login = (req, res, next) => { // Авторизация поль�
     .catch(next);
 };
 
-module.exports.getUser = (req, res) => { // Запрос информации о пользователе //
+module.exports.getUser = (req, res, next) => { // Запрос информации о пользователе //
   User.find({})
     .then((users) => {
-      res.send({ data: users });
+      res.status(200).send({ data: users });
     })
-    .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка: ${err}` });
-    });
+    .catch(next);
 };
 
 module.exports.getUserId = (req, res, next) => { // Запрос пользователя по id //
