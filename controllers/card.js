@@ -38,7 +38,7 @@ module.exports.deleteCard = (req, res, next) => {
       if (!result.owner.equals(req.user._id)) {
         throw new ForbiddenError('Доступ запрещен');
       }
-      Card.deleteOne(result).then(res.send(result));
+      return Card.deleteOne(result).then(res.send(result));
     })
     .catch(next);
 };

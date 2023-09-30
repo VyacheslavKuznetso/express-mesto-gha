@@ -95,9 +95,7 @@ module.exports.createUser = (req, res, next) => { // Регистрация по
           }
         });
     })
-    .catch((err) => {
-      res.status(500).send({ message: `Произошла ошибка при хешировании пароля: ${err}` });
-    });
+    .catch(next);
 };
 
 module.exports.updateUser = (req, res, next) => { // Обновить информацию о пользователе //
