@@ -13,7 +13,7 @@ const { createUserValidation, loginUserValidation } = require('./validators/user
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const { limiter } = require('./express-rate-limit/limiter');
 
-const { PORT, DB_URL } = process.env;
+const { DB_URL } = process.env;
 
 const app = express();
 app.use(helmet());
@@ -60,6 +60,4 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-app.listen(PORT, () => {
-  console.log(`listen ${PORT}`);
-});
+module.exports = app;
